@@ -50,6 +50,8 @@ pub(crate) mod benchmarking;
 
 pub use pallet::*;
 
+const LOG_TARGET: &str = "runtime::paras";
+
 // the two key times necessary to track for every code replacement.
 #[derive(Default, Encode, Decode, TypeInfo)]
 #[cfg_attr(test, derive(Debug, Clone, PartialEq))]
@@ -1042,7 +1044,7 @@ impl<T: Config> Pallet<T> {
 								Self::decrease_code_ref(&removed_code_hash);
 							} else {
 								log::warn!(
-									target: "runtime::paras",
+									target: LOG_TARGET,
 									"Missing code for removed hash {:?}",
 									removed_code_hash,
 								);
@@ -1119,7 +1121,7 @@ impl<T: Config> Pallet<T> {
 					// `PvfActiveVoteMap`'s keys is always equal to the set of items found in
 					// `PvfActiveVoteList`.
 					log::warn!(
-						target: "runtime::paras",
+						target: LOG_TARGET,
 						"The PvfActiveVoteMap is out of sync with PvfActiveVoteList!",
 					);
 					debug_assert!(false);
@@ -1453,10 +1455,7 @@ impl<T: Config> Pallet<T> {
 			// Any candidate that attempts to do that should be rejected by
 			// `can_upgrade_validation_code`.
 			UpgradeGoAheadSignal::<T>::insert(&id, UpgradeGoAhead::Abort);
-			log::warn!(
-				target: "runtime::paras",
-				"ended up scheduling an upgrade while one is pending",
-			);
+			log::warn!(target: LOG_TARGET, "ended up scheduling an upgrade while one is pending",);
 			return weight
 		}
 
@@ -1467,7 +1466,7 @@ impl<T: Config> Pallet<T> {
 		weight += T::DbWeight::get().reads(1);
 		if CurrentCodeHash::<T>::get(&id) == Some(code_hash) {
 			log::info!(
-				target: "runtime::paras",
+				target: LOG_TARGET,
 				"para tried to upgrade to the same code. Abort the upgrade",
 			);
 			UpgradeGoAheadSignal::<T>::insert(&id, UpgradeGoAhead::Abort);
@@ -1642,11 +1641,7 @@ impl<T: Config> Pallet<T> {
 		if let Err(e) = SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(
 			Call::include_pvf_check_statement { stmt, signature }.into(),
 		) {
-			log::error!(
-				target: "runtime::paras",
-				"Error submitting pvf check statement: {:?}",
-				e,
-			);
+			log::error!(target: LOG_TARGET, "Error submitting pvf check statement: {:?}", e,);
 		}
 	}
 
